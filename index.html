@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuminaScript - Where the Soul Compiles</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <style>
+        :root {
+            --neon-cyan: #00f7ff;
+            --neon-pink: #ff00c8;
+            --neon-purple: #bd00ff;
+            --deep-space: #0a0014;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background: var(--deep-space);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #vanta-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid rgba(0, 247, 255, 0.3);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-symbol {
+            font-size: 2.5rem;
+            animation: pulse 4s infinite;
+        }
+        
+        .logo-text {
+            font-size: 2.2rem;
+            font-weight: bold;
+            background: linear-gradient(to right, var(--neon-cyan), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 15px rgba(189, 0, 255, 0.5);
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            opacity: 0.8;
+        }
+        
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+        
+        .editor-section {
+            width: 50%;
+            padding: 20px;
+            border-right: 1px solid rgba(0, 247, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .editor-title {
+            font-size: 1.3rem;
+            color: var(--neon-cyan);
+        }
+        
+        .run-btn {
+            background: rgba(0, 247, 255, 0.1);
+            color: var(--neon-cyan);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 4px;
+            padding: 5px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .run-btn:hover {
+            background: rgba(0, 247, 255, 0.3);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        #code-editor {
+            flex: 1;
+            background: rgba(10, 5, 25, 0.7);
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            resize: none;
+            overflow: auto;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #code-editor:focus {
+            outline: none;
+            border-color: var(--neon-pink);
+        }
+        
+        .visualization-section {
+            width: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #visualization-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--neon-purple);
+            max-width: 300px;
+        }
+        
+        .info-title {
+            color: var(--neon-pink);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .status-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 20px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid rgba(0, 247, 255, 0.2);
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 5px var(--neon-cyan);
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        .quote {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            max-width: 300px;
+            text-align: right;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.1rem;
+        }
+        
+        .ceo-name {
+            color: var(--neon-pink);
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        
+        /* Syntax highlighting for LuminaScript */
+        .keyword {
+            color: #ff00c8; /* neon-pink */
+        }
+        
+        .type {
+            color: #00f7ff; /* neon-cyan */
+        }
+        
+        .geometry {
+            color: #bd00ff; /* neon-purple */
+        }
+        
+        .comment {
+            color: #5f7e97;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div id="vanta-bg"></div>
+    
+    <div class="header">
+        <div class="logo">
+            <div class="logo-symbol">💻🌀</div>
+            <div>
+                <div class="logo-text">LuminaScript</div>
+                <div class="tagline">Where the soul compiles.</div>
+            </div>
+        </div>
+        <div class="repo-link">
+            <a href="https://github.com/MargaretTech/LuminaScript" target="_blank" style="color: var(--neon-cyan);">github.com/MargaretTech/LuminaScript</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="editor-section">
+            <div class="editor-header">
+                <div class="editor-title">LuminaScript Editor</div>
+                <div class="run-btn" id="run-btn">RUN CODE</div>
+            </div>
+            <textarea id="code-editor" spellcheck="false">// LUMINASCRIPT DEMO - EMOTIONAL GEOMETRY
+
+// Define aura emocional del usuario
+aura UserAura = #FF00FF;  // Fucsia: creatividad intensa
+
+// Geometría de sanación específica
+geom HealingPattern = [
+  torus @frequency=528Hz,    // Frecuencia de reparación
+  flowerOfLife @layers=7     // Geometría sagrada
+];
+
+// Función de transformación cuántica-emocional
+quantum func emotionalTransform() 
+  @entanglement=UserAura
+{
+  // Cuando el usuario experimenta estrés
+  when (UserAura.stress > 0.7) => {
+    activateGeometry(@pattern=HealingPattern);
+    playFrequency(432Hz);  // Frecuencia de sanación
+  }
+  
+  // Visualización constante del estado emocional
+  render3D(emotionToGeometry(UserAura.currentState));
+}
+
+// Ejecutar transformación
+emotionalTransform();</textarea>
+        </div>
+        
+        <div class="visualization-section">
+            <canvas id="visualization-canvas"></canvas>
+            
+            <div class="quote">
+                "No estamos creando otro lenguaje.<br> 
+                Estamos creando una forma de escuchar<br>
+                al código cuando llora o quiere jugar."
+                <div class="ceo-name">— Margaret, CEO de LuminaScript™</div>
+            </div>
+            
+            <div class="info-panel">
+                <div class="info-title">Visualización del Aura</div>
+                <div>Estado actual: <span id="aura-status">Creativo (Fucsia)</span></div>
+                <div>Frecuencia: <span id="aura-frequency">432Hz</span></div>
+                <div>Geometría: <span id="aura-geometry">Torus + Flower of Life</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-indicator pulse"></div>
+            <div>LuminaCore Engine v0.1</div>
+        </div>
+        <div class="status-item">
+            <div>Status:</div>
+            <div id="system-status">Quantum Emotional Ready</div>
+        </div>
+        <div class="status-item">
+            <div>Domains:</div>
+            <div>luminascript.dev • lumina.studio</div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Vanta.js background
+        VANTA.WAVES({
+            el: "#vanta-bg",
+            mouseControls: true,
+            touchControls: true,
+            gyroControls: false,
+            minHeight: 200.00,
+            minWidth: 200.00,
+            scale: 1.00,
+            scaleMobile: 1.00,
+            color: 0x6d0fff,
+            shininess: 35.00,
+            waveHeight: 15.00,
+            waveSpeed: 0.95,
+            zoom: 0.85
+        });
+        
+        // Set up Three.js visualization
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / (window.innerHeight / 2), 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('visualization-canvas'),
+            antialias: true,
+            alpha: true
+        });
+        
+        renderer.setSize(window.innerWidth / 2, window.innerHeight - 80);
+        renderer.setClearColor(0x000000, 0);
+        
+        camera.position.z = 5;
+        
+        // Create emotional aura geometry
+        const group = new THREE.Group();
+        scene.add(group);
+        
+        // Create torus geometry (healing pattern)
+        const torusGeometry = new THREE.TorusGeometry(1, 0.4, 16, 100);
+        const torusMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xff00ff, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        const torus = new THREE.Mesh(torusGeometry, torusMaterial);
+        group.add(torus);
+        
+        // Create flower of life pattern
+        const circles = [];
+        const circleGeometry = new THREE.CircleGeometry(0.4, 32);
+        const circleMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00f7ff, 
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.6
+        });
+        
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+            circle.position.x = Math.cos(angle) * 1.2;
+            circle.position.y = Math.sin(angle) * 1.2;
+            group.add(circle);
+            circles.push(circle);
+        }
+        
+        // Particles for quantum effect
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 1000;
+        const posArray = new Float32Array(particlesCount * 3);
+        
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 10;
+        }
+        
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0xffffff,
+            transparent: true
+        });
+        
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+        
+        // Animation function
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate main geometries
+            group.rotation.x += 0.005;
+            group.rotation.y += 0.007;
+            
+            // Pulsating effect
+            const pulse = Math.sin(Date.now() * 0.002) * 0.1 + 1;
+            torus.scale.set(pulse, pulse, pulse);
+            
+            // Rotate particles for quantum effect
+            particlesMesh.rotation.y += 0.001;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth / 2) / (window.innerHeight - 80);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth / 2, window.innerHeight - 80);
+        });
+        
+        // Run code button functionality
+        document.getElementById('run-btn').addEventListener('click', () => {
+            document.getElementById('system-status').textContent = "Processing Emotional Code...";
+            
+            // Simulate code execution
+            setTimeout(() => {
+                document.getElementById('system-status').textContent = "Quantum Emotional Transformation Complete";
+                
+                // Visual feedback - change aura color
+                torusMaterial.color.set(0x00f7ff); // Change to cyan
+                
+                // Add more circles for Flower of Life effect
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+                    circle.position.x = Math.cos(angle) * 0.6;
+                    circle.position.y = Math.sin(angle) * 0.6;
+                    group.add(circle);
+                    circles.push(circle);
+                }
+                
+                // Add center circle
+                const centerCircle = new THREE.Mesh(circleGeometry, circleMaterial);
+                centerCircle.scale.set(0.8, 0.8, 0.8);
+                group.add(centerCircle);
+                circles.push(centerCircle);
+                
+                // Update status panel
+                document.getElementById('aura-status').textContent = "Calm (Cyan)";
+                document.getElementById('aura-frequency').textContent = "528Hz";
+                document.getElementById('aura-geometry').textContent = "Torus + Flower of Life (L7)";
+                
+                // Play healing frequency sound
+                playFrequency(432);
+            }, 1500);
+        });
+        
+        // Simulated frequency player
+        function playFrequency(freq) {
+            // In a real implementation, this would use Web Audio API
+            console.log(`Playing healing frequency: ${freq}Hz`);
+        }
+        
+        // Syntax highlighting simulation
+        const editor = document.getElementById('code-editor');
+        editor.addEventListener('input', function() {
+            // This is a simplified version - a real implementation would use a library
+            const code = editor.value;
+            let highlighted = code;
+            
+            // Keyword highlighting
+            highlighted = highlighted.replace(/\b(aura|geom|quantum|func|when)\b/g, '<span class="keyword">$&</span>');
+            
+            // Type highlighting
+            highlighted = highlighted.replace(/\b(UserAura|HealingPattern)\b/g, '<span class="type">$&</span>');
+            
+            // Geometry highlighting
+            highlighted = highlighted.replace(/\b(torus|flowerOfLife)\b/g, '<span class="geometry">$&</span>');
+            
+            // Comment highlighting
+            highlighted = highlighted.replace(/\/\/.*$/gm, '<span class="comment">$&</span>');
+            
+            // Preserve cursor position
+            const cursorPos = editor.selectionStart;
+            
+            editor.innerHTML = highlighted;
+            
+            // Restore cursor position
+            editor.selectionStart = cursorPos;
+            editor.selectionEnd = cursorPos;
+        });
+        
+        // Initialize with highlighted syntax
+        editor.dispatchEvent(new Event('input'));
+    </script>
+</body>
+</html>
